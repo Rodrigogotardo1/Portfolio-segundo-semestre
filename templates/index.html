@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="hero">
+    <h1>Juntos contra a Dengue!</h1>
+    <p>O Zer@Dengue é a plataforma inteligente para você denunciar focos de proliferação do mosquito na sua cidade de forma rápida e segura.</p>
+    <div>
+        <a href="{{ url_for('cadastro') }}" class="btn-primary" style="font-size: 1.25rem; padding: 1rem 2rem;">Começar Agora</a>
+    </div>
+</div>
+{% endblock %}

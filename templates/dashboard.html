@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-header" style="margin-top: 2rem;">
+    <div>
+        <h2 style="font-size: 2rem; color: var(--text-main);">Olá, {{ user.cadastro.nome.split(' ')[0] }}!</h2>
+        <p style="color: var(--text-muted);">Acompanhe suas denúncias abaixo.</p>
+    </div>
+    <a href="{{ url_for('nova_denuncia') }}" class="btn-primary">+ Nova Denúncia</a>
+</div>
+
+{% if denuncias %}
+    <div class="card-grid">
+        {% for denuncia in denuncias %}
+        <div class="denuncia-card">
+            <div class="denuncia-card-body">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    <span class="badge">Em Análise</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">#{{ denuncia.id }}</span>
+                </div>
+                <h3 class="denuncia-card-title">{{ denuncia.bairro }}</h3>
+                <p style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">
+                    📍 {{ denuncia.endereco }}
+                </p>
+                <p class="denuncia-card-text">
+                    {{ denuncia.descricao[:100] }}{% if denuncia.descricao|length > 100 %}...{% endif %}
+                </p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div style="text-align: center; padding: 4rem; background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <h3 style="color: var(--text-muted); margin-bottom: 1rem;">Você ainda não fez nenhuma denúncia.</h3>
+        <p>Ajude sua cidade a combater a Dengue relatando possíveis focos do mosquito.</p>
+    </div>
+{% endif %}
+{% endblock %}
