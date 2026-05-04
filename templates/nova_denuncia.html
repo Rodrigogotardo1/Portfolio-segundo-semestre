@@ -1,23 +1,45 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <div class="auth-wrapper" style="margin-top: 2rem; margin-bottom: 2rem;">
-    <div class="auth-card" style="max-width: 600px;">
+    <div class="auth-card" style="max-width: 800px;">
         <h2>Registrar Nova Denúncia</h2>
-        <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Informe os detalhes do possível foco de proliferação do mosquito.</p>
+        <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Informe os detalhes e a localização do possível foco de proliferação do mosquito.</p>
         
         <form method="POST">
-            <div class="form-group">
-                <label class="form-label" for="endereco">Endereço Completo</label>
-                <input type="text" id="endereco" name="endereco" class="form-control" required placeholder="Rua, Número, Referência">
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="bairro">Bairro</label>
-                <input type="text" id="bairro" name="bairro" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="descricao">Descrição do Problema</label>
-                <textarea id="descricao" name="descricao" class="form-control" rows="4" required placeholder="Ex: Terreno abandonado com pneus velhos acumulando água da chuva..."></textarea>
+            <div class="form-row">
+                <div style="flex: 1;">
+                    <div class="form-group">
+                        <label class="form-label" for="endereco">Endereço Completo</label>
+                        <input type="text" id="endereco" name="endereco" class="form-control" required placeholder="Rua, Número, Referência">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="bairro">Bairro</label>
+                        <input type="text" id="bairro" name="bairro" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="descricao">Descrição do Problema</label>
+                        <textarea id="descricao" name="descricao" class="form-control" rows="4" required placeholder="Ex: Terreno abandonado com pneus velhos acumulando água da chuva..."></textarea>
+                    </div>
+                </div>
+                
+                <div style="flex: 1;">
+                    <div class="form-group">
+                        <label class="form-label">Localização no Mapa</label>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            Por favor, permita o acesso à sua localização para que o mapa indique o local exato do foco.
+                        </p>
+                        <div id="map" style="height: 250px; border-radius: 0.5rem; border: 1px solid var(--border-color); z-index: 1;"></div>
+                        <input type="hidden" id="latitude" name="latitude">
+                        <input type="hidden" id="longitude" name="longitude">
+                        <button type="button" id="btn-location" class="btn-outline" style="width: 100%; margin-top: 0.5rem; font-size: 0.85rem;">
+                            Atualizar Minha Localização
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <div style="display: flex; gap: 1rem; margin-top: 2rem;">
@@ -27,4 +49,63 @@
         </form>
     </div>
 </div>
+
+<script>
+    // Configuração inicial do mapa (centralizado no Brasil)
+    var map = L.map('map').setView([-14.2350, -51.9253], 4);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    var marker;
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition, showError);
+        } else {
+            alert("A Geolocalização não é suportada neste navegador.");
+        }
+    }
+
+    function showPosition(position) {
+        var lat = position.coords.latitude;
+        var lon = position.coords.longitude;
+        
+        // Atualiza campos ocultos
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lon;
+        
+        // Atualiza o mapa
+        map.setView([lat, lon], 16);
+        
+        if (marker) {
+            marker.setLatLng([lat, lon]);
+        } else {
+            marker = L.marker([lat, lon]).addTo(map);
+        }
+    }
+
+    function showError(error) {
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                alert("Usuário negou a solicitação de Geolocalização.");
+                break;
+            case error.POSITION_UNAVAILABLE:
+                alert("Informações de localização não estão disponíveis.");
+                break;
+            case error.TIMEOUT:
+                alert("A requisição para obter a localização do usuário expirou.");
+                break;
+            case error.UNKNOWN_ERROR:
+                alert("Ocorreu um erro desconhecido.");
+                break;
+        }
+    }
+
+    // Tentar pegar a localização assim que carregar
+    getLocation();
+
+    // Permitir que o usuário atualize a localização clicando no botão
+    document.getElementById('btn-location').addEventListener('click', getLocation);
+</script>
 {% endblock %}

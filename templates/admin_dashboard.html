@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<div class="dashboard-header" style="margin-top: 2rem;">
+    <div>
+        <h2 style="font-size: 2rem; color: var(--text-main);">Painel de Gestão - Zer@Dengue</h2>
+        <p style="color: var(--text-muted);">Bem-vindo, {{ user.cadastro.nome }}. Aqui você visualiza o mapa de focos e gerencia os relatórios.</p>
+    </div>
+</div>
+
+<div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+    <!-- Mapa -->
+    <div style="flex: 1; min-width: 400px; background: white; padding: 1rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <h3 style="margin-bottom: 1rem;">Mapa de Focos</h3>
+        <div id="map" style="height: 500px; border-radius: 0.5rem; z-index: 1;"></div>
+    </div>
+
+    <!-- Lista de Denúncias -->
+    <div style="flex: 1; min-width: 400px;">
+        <h3 style="margin-bottom: 1rem;">Gerenciar Denúncias</h3>
+        
+        {% for denuncia in denuncias %}
+        <div class="denuncia-card" style="margin-bottom: 1rem;">
+            <div class="denuncia-card-body">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    {% if denuncia.status == 'Concluído' %}
+                        <span class="badge" style="background-color: #DEF7EC; color: #03543F;">Concluído</span>
+                    {% else %}
+                        <span class="badge">Em Análise</span>
+                    {% endif %}
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">{{ denuncia.data_criacao.strftime('%d/%m/%Y') if denuncia.data_criacao else '' }}</span>
+                </div>
+                <h3 class="denuncia-card-title">{{ denuncia.bairro }}</h3>
+                <p style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">
+                    📍 {{ denuncia.endereco }}
+                </p>
+                <p class="denuncia-card-text">
+                    {{ denuncia.descricao }}
+                </p>
+                
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    Reportado por: {{ denuncia.usuario.cadastro.nome }}
+                </p>
+
+                {% if denuncia.status != 'Concluído' %}
+                <div style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                    <form method="POST" action="{{ url_for('criar_relatorio', id=denuncia.id) }}">
+                        <div class="form-group">
+                            <label class="form-label" style="font-size: 0.9rem;">Relatório de Ação</label>
+                            <textarea name="relatorio" class="form-control" rows="2" required placeholder="O que foi feito?"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-size: 0.9rem;">Conclusão</label>
+                            <select name="conclusao" class="form-control" required>
+                                <option value="Foco Eliminado">Foco Eliminado</option>
+                                <option value="Falso Alarme">Falso Alarme</option>
+                                <option value="Encaminhado para a Prefeitura">Encaminhado para a Prefeitura</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-primary" style="padding: 0.4rem 1rem; font-size: 0.9rem;">Finalizar Denúncia</button>
+                    </form>
+                </div>
+                {% else %}
+                <div style="background-color: #F9FAFB; padding: 1rem; border-radius: 0.5rem;">
+                    <p style="font-size: 0.9rem;"><strong>Relatório:</strong> {{ denuncia.relatorios[-1].relatorio if denuncia.relatorios else '' }}</p>
+                    <p style="font-size: 0.9rem;"><strong>Conclusão:</strong> {{ denuncia.relatorios[-1].conclusao if denuncia.relatorios else '' }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% if not denuncias %}
+            <p>Nenhuma denúncia no sistema.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Inicializar o mapa do Leaflet
+    // Centralizando em um local default (centro do Brasil)
+    var map = L.map('map').setView([-14.2350, -51.9253], 4);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Variável para ver se temos marcadores para ajustar o zoom
+    var markers = [];
+
+    // Adicionar os marcadores das denúncias no mapa
+    {% for denuncia in denuncias %}
+        {% if denuncia.latitude and denuncia.longitude %}
+            var marker = L.marker([{{ denuncia.latitude }}, {{ denuncia.longitude }}]).addTo(map);
+            
+            var popupContent = `
+                <strong>{{ denuncia.bairro }}</strong><br>
+                {{ denuncia.endereco }}<br>
+                Status: {{ denuncia.status }}
+            `;
+            marker.bindPopup(popupContent);
+            markers.push([{{ denuncia.latitude }}, {{ denuncia.longitude }}]);
+        {% endif %}
+    {% endfor %}
+
+    // Ajustar o mapa para caber todos os marcadores
+    if (markers.length > 0) {
+        map.fitBounds(markers);
+    } else {
+        // Tenta pegar a localização atual do admin se não houver denúncias
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                map.setView([position.coords.latitude, position.coords.longitude], 12);
+            });
+        }
+    }
+</script>
+{% endblock %}

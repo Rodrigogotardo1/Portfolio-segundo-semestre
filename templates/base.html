@@ -13,12 +13,16 @@
         </a>
         <ul class="navbar-nav">
             {% if session.get('user_id') %}
-                <li><a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a></li>
+                {% if is_admin_global %}
+                    <li><a href="{{ url_for('admin_dashboard') }}" class="nav-link" style="color: var(--primary-dark);">Painel de Gestão (Mapa)</a></li>
+                {% endif %}
+                <li><a href="{{ url_for('dashboard') }}" class="nav-link">Minhas Denúncias</a></li>
                 <li><a href="{{ url_for('nova_denuncia') }}" class="btn-primary">Nova Denúncia</a></li>
                 <li><a href="{{ url_for('logout') }}" class="btn-outline">Sair</a></li>
             {% else %}
                 <li><a href="{{ url_for('login') }}" class="nav-link">Entrar</a></li>
-                <li><a href="{{ url_for('cadastro') }}" class="btn-primary">Cadastrar-se</a></li>
+                <li><a href="{{ url_for('cadastro') }}" class="btn-primary">Cadastrar Cidadão</a></li>
+                <li><a href="{{ url_for('cadastro_admin') }}" class="nav-link" style="font-size: 0.85rem; padding-top: 0.5rem;">Sou Agente</a></li>
             {% endif %}
         </ul>
     </nav>
